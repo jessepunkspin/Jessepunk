@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+(your local README content)
+=======
+(remote GitHub README content)
+>>>>>>> origin/main<<<<<<< HEAD
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-onchain`](https://www.npmjs.com/package/create-onchain).
 
 
@@ -37,3 +42,6 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 To learn more about OnchainKit, see our [documentation](https://docs.base.org/onchainkit).
 
 To learn more about Next.js, see the [Next.js documentation](https://nextjs.org/docs).
+=======
+# Jessepunk
+>>>>>>> 193013f7c1f84f0f7fa2f74fc89ecdb5b7b40e57
