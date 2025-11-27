@@ -1,143 +1,135 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Wallet } from "@coinbase/onchainkit/wallet";
+import { useEffect, useState } from "react";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
-
-// FIXED: no more crashing date function
-const getToday = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-};
+import { Wallet } from "@coinbase/onchainkit/wallet";
 
 export default function Home() {
-  const { setMiniAppReady, isMiniAppReady } = useMiniKit();
+  const { context, setMiniAppReady, isMiniAppReady } = useMiniKit();
 
-  const [score, setScore] = useState(0);
-  const [checkedIn, setCheckedIn] = useState(false);
-  const [today, setToday] = useState(getToday());
-  const [animate, setAnimate] = useState(false);
+  const [walletAddress, setWalletAddress] = useState<string>("");
+  const [fid, setFid] = useState<number | null>(null);
+  const [displayName, setDisplayName] = useState<string>("");
 
-  // Mark MiniApp ready
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+
+  // Client-side check-in helper
+  async function doCheckIn(walletAddress: string, fid?: number, displayName?: string) {
+    try {
+      const res = await fetch("/api/post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ walletAddress, fid, displayName }),
+      });
+      const json = await res.json();
+      console.log("check-in response", json);
+      return json;
+    } catch (err) {
+      console.error("check-in failed", err);
+      return { ok: false, error: String(err) };
+    }
+  }
+
+  // MiniKit ready setup
   useEffect(() => {
     if (!isMiniAppReady) setMiniAppReady();
   }, [isMiniAppReady, setMiniAppReady]);
 
-  // Load saved state
+  // Read MiniKit user data (FID, display name, connected wallet)
   useEffect(() => {
-    const savedScore = localStorage.getItem("jp_score");
-    const savedDay = localStorage.getItem("jp_checkin_day");
-    const savedChecked = localStorage.getItem("jp_checked_in");
+    const user = context?.user;
 
-    const currentDay = getToday();
-    setToday(currentDay);
-
-    if (savedScore) setScore(Number(savedScore));
-
-    // If new day → reset check-in
-    if (savedDay !== currentDay) {
-      localStorage.setItem("jp_checkin_day", currentDay);
-      localStorage.setItem("jp_checked_in", "no");
-      setCheckedIn(false);
-    } else {
-      setCheckedIn(savedChecked === "yes");
+    if (user) {
+      if (user.fid) setFid(user.fid);
+      if (user.displayName) setDisplayName(user.displayName);
+      if (user.wallet && user.wallet.address) {
+        setWalletAddress(user.wallet.address);
+      }
     }
-  }, []);
+  }, [context]);
 
-  // Save score
-  useEffect(() => {
-    localStorage.setItem("jp_score", String(score));
-  }, [score]);
-
-  const increaseScore = () => {
-    setAnimate(true);
-    setTimeout(() => setAnimate(false), 120);
-    setScore((prev) => prev + 1);
-  };
-
-  // Daily check-in
-  const handleCheckIn = async () => {
-    if (checkedIn) return;
-
-    try {
-      await fetch("/api/post", {
-        method: "POST",
-        body: JSON.stringify({
-          action: "daily_checkin",
-          date: today,
-          score,
-        }),
-      });
-    } catch (e) {
-      console.log("Post failed (not configured).");
+  async function handleCheckIn() {
+    if (!walletAddress) {
+      alert("Connect wallet first.");
+      return;
     }
 
-    setCheckedIn(true);
-    localStorage.setItem("jp_checked_in", "yes");
-    localStorage.setItem("jp_checkin_day", today);
-  };
+    setLoading(true);
+
+    const resp = await doCheckIn(walletAddress, fid || undefined, displayName);
+
+    setResult(resp);
+    setLoading(false);
+  }
 
   return (
     <div
       style={{
+        padding: 20,
+        color: "white",
+        textAlign: "center",
         minHeight: "100vh",
         background: "black",
-        color: "white",
-        padding: 20,
-        textAlign: "center",
       }}
     >
+      {/* Wallet button */}
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <Wallet />
       </div>
 
-      <h1 style={{ marginTop: 20, fontSize: 28 }}>🔥 Jessepunk Mini-Game</h1>
+      <h1 style={{ fontSize: 34, marginTop: 20 }}>🔥 Jessepunk Daily Check-In</h1>
 
-      <h2
-        style={{
-          fontSize: 60,
-          marginTop: 30,
-          transition: "transform 0.12s ease",
-          transform: animate ? "scale(1.18)" : "scale(1)",
-        }}
-      >
-        {score}
-      </h2>
+      {/* Show user info */}
+      <div style={{ marginTop: 20, fontSize: 16, opacity: 0.7 }}>
+        {fid ? (
+          <>
+            <p>FID: {fid}</p>
+            <p>Wallet: {walletAddress}</p>
+            <p>User: {displayName}</p>
+          </>
+        ) : (
+          <p>Waiting for MiniKit user context…</p>
+        )}
+      </div>
 
+      {/* Check in button */}
       <button
-        onClick={increaseScore}
+        onClick={handleCheckIn}
+        disabled={loading}
         style={{
+          marginTop: 30,
+          padding: "14px 26px",
           background: "#5b3df5",
-          padding: "16px 40px",
+          borderRadius: 10,
+          fontSize: 20,
           color: "white",
-          borderRadius: 12,
-          border: "none",
-          fontSize: 22,
-          marginTop: 25,
         }}
       >
-        +1
+        {loading ? "Checking in…" : "Daily Check-In"}
       </button>
 
-      <div style={{ marginTop: 40 }}>
-        <button
-          onClick={handleCheckIn}
-          disabled={checkedIn}
+      {/* Results */}
+      {result && (
+        <div
           style={{
-            background: checkedIn ? "#666" : "#ffaa00",
-            padding: "14px 32px",
+            marginTop: 40,
+            padding: 20,
+            border: "1px solid #333",
             borderRadius: 12,
-            border: "none",
-            fontSize: 20,
-            color: checkedIn ? "#aaa" : "black",
-            fontWeight: "700",
+            background: "#111",
+            textAlign: "left",
+            maxWidth: 400,
+            marginInline: "auto",
           }}
         >
-          {checkedIn ? "Checked In ✓" : "Daily Check-In"}
-        </button>
+          <h3 style={{ marginBottom: 10 }}>Result:</h3>
 
-        <p style={{ marginTop: 10, opacity: 0.7 }}>Today: {today}</p>
-      </div>
+          <pre style={{ fontSize: 12, whiteSpace: "pre-wrap" }}>
+{JSON.stringify(result, null, 2)}
+          </pre>
+        </div>
+      )}
     </div>
   );
-}
+          }
