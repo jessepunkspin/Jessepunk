@@ -2,71 +2,62 @@
 
 import { useState, useEffect } from "react";
 import { Wallet } from "@coinbase/onchainkit/wallet";
-import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
 export default function Home() {
   const [score, setScore] = useState(0);
-  const { setMiniAppReady, isMiniAppReady } = useMiniKit();
 
-  // Required for MiniApp to load
+  // Load score from local storage
   useEffect(() => {
-    if (!isMiniAppReady) {
-      setMiniAppReady();
-    }
-  }, [setMiniAppReady, isMiniAppReady]);
+    const saved = localStorage.getItem("jp_score");
+    if (saved) setScore(Number(saved));
+  }, []);
+
+  // Save score automatically
+  useEffect(() => {
+    localStorage.setItem("jp_score", score.toString());
+  }, [score]);
+
+  const handleClick = () => {
+    setScore((prev) => prev + 1);
+  };
 
   return (
     <div
       style={{
-        padding: 20,
-        minHeight: "100vh",
         background: "black",
+        height: "100vh",
+        padding: 20,
         textAlign: "center",
         color: "white",
       }}
     >
       {/* Wallet button */}
-      <header style={{ display: "flex", justifyContent: "flex-end" }}>
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <Wallet />
-      </header>
+      </div>
 
-      <h1 style={{ fontSize: 32, marginTop: 20 }}>🔥 Jessepunk Mini-Game</h1>
-      <p style={{ opacity: 0.8 }}>Tap the button to increase your score</p>
+      <h1 style={{ fontSize: 28, marginTop: 20 }}>
+        🔥 Jessepunk Mini-Game
+      </h1>
 
-      {/* Score with pop animation */}
-      <h2
-        style={{
-          fontSize: 60,
-          margin: "30px 0",
-          transition: "transform 0.15s ease",
-          transform: score > 0 ? "scale(1.15)" : "scale(1)",
-        }}
-      >
-        {score}
-      </h2>
+      <p>Tap the button to increase your score</p>
 
-      {/* Tap Button */}
+      <h2 style={{ fontSize: 60, marginTop: 20 }}>{score}</h2>
+
       <button
+        onClick={handleClick}
         style={{
-          marginTop: 20,
+          marginTop: 30,
           background: "#5b3df5",
           color: "white",
-          padding: "18px 40px",
-          fontSize: 24,
-          borderRadius: 14,
+          padding: "15px 30px",
+          fontSize: 22,
+          borderRadius: 12,
           border: "none",
-        }}
-        onClick={() => {
-          setScore(score + 1);
-
-          // Reset animation after 150ms
-          setTimeout(() => {
-            // nothing needed, React re-renders automatically
-          }, 150);
         }}
       >
         +1
       </button>
     </div>
   );
-      }
+}
