@@ -1,13 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // For Next 15 the "experimental.serverActions" must be an object
+  // Use an empty object here to satisfy the validator and keep serverActions behavior.
   experimental: {
-    serverActions: true,
+    serverActions: {}, // <-- use an object, not a boolean
     optimizePackageImports: ["@coinbase/onchainkit"],
   },
 
   images: {
-    unoptimized: true, // required for Farcaster MiniApps
+    unoptimized: true, // required for MiniApps in Base
   },
 
   webpack: (config) => {
