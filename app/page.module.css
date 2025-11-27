@@ -1,37 +1,50 @@
 .container {
-  display: grid;
-  grid-template-rows: auto 1fr;
   min-height: 100vh;
+  width: 100%;
+  padding: 20px;
+  background: #000000;
+  color: #ffffff;
+  text-align: center;
 }
 
 .headerWrapper {
   display: flex;
   justify-content: flex-end;
-  padding: 1rem;
+  margin-bottom: 20px;
 }
 
 .content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding-bottom: 5vh;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
 }
 
 .title {
-  font-size: clamp(2rem, 8vw, 80px);
-  font-weight: 500;
-  letter-spacing: -0.02em;
+  font-size: 32px;
+  font-weight: 600;
+  margin-bottom: 15px;
 }
 
 .componentsTitle {
+  font-size: 20px;
   font-weight: 600;
-  margin-top: 2rem;
+  margin-top: 30px;
 }
 
 .components {
-  list-style-type: disc;
-  margin-top: 0.75rem;
+  list-style: none;
+  padding: 0;
+  margin-top: 15px;
+}
+
+.components li {
+  margin: 10px 0;
+}
+
+.components a {
+  color: #4da6ff;
+  font-size: 16px;
+  text-decoration: none;
 }
 
 .components a:hover {
