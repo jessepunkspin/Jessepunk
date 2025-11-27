@@ -1,0 +1,17 @@
+{
+  "version": "1",
+  "id": "jessepunk-miniapp",
+  "name": "Jessepunk Mini-Game",
+  "description": "A simple daily check-in game that rewards active users.",
+  "iconUrl": "/icon.png",
+  "splashImageUrl": "/splash.png",
+  "heroImageUrl": "/hero.png",
+  "homeUrl": "/",
+  "button": {
+    "title": "Launch Jessepunk",
+    "action": {
+      "type": "launch_miniapp",
+      "name": "Launch Jessepunk Mini-Game"
+    }
+  }
+}
