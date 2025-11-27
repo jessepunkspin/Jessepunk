@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Wallet } from "@coinbase/onchainkit/wallet";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
-// Format today as YYYY-M-D
+// FIXED: no more crashing date function
 const getToday = () => {
   const d = new Date();
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
@@ -18,18 +18,12 @@ export default function Home() {
   const [today, setToday] = useState(getToday());
   const [animate, setAnimate] = useState(false);
 
-  // =============================
-  // MiniKit Initialization
-  // =============================
+  // Mark MiniApp ready
   useEffect(() => {
-    if (!isMiniAppReady) {
-      setMiniAppReady();
-    }
-  }, [setMiniAppReady, isMiniAppReady]);
+    if (!isMiniAppReady) setMiniAppReady();
+  }, [isMiniAppReady, setMiniAppReady]);
 
-  // =============================
-  // Load saved score + checkin state
-  // =============================
+  // Load saved state
   useEffect(() => {
     const savedScore = localStorage.getItem("jp_score");
     const savedDay = localStorage.getItem("jp_checkin_day");
@@ -38,10 +32,9 @@ export default function Home() {
     const currentDay = getToday();
     setToday(currentDay);
 
-    // Restore score
     if (savedScore) setScore(Number(savedScore));
 
-    // Reset check-in if new day
+    // If new day → reset check-in
     if (savedDay !== currentDay) {
       localStorage.setItem("jp_checkin_day", currentDay);
       localStorage.setItem("jp_checked_in", "no");
@@ -51,39 +44,32 @@ export default function Home() {
     }
   }, []);
 
-  // =============================
-  // Save score automatically
-  // =============================
+  // Save score
   useEffect(() => {
     localStorage.setItem("jp_score", String(score));
   }, [score]);
 
-  // =============================
-  // Tap Button (with animation)
-  // =============================
   const increaseScore = () => {
     setAnimate(true);
     setTimeout(() => setAnimate(false), 120);
     setScore((prev) => prev + 1);
   };
 
-  // =============================
-  // Daily Check-In Logic
-  // =============================
+  // Daily check-in
   const handleCheckIn = async () => {
     if (checkedIn) return;
 
     try {
-      // auto-post placeholder
       await fetch("/api/post", {
         method: "POST",
         body: JSON.stringify({
-          action: "checkin",
+          action: "daily_checkin",
           date: today,
+          score,
         }),
       });
-    } catch (err) {
-      console.log("Post route not configured yet.");
+    } catch (e) {
+      console.log("Post failed (not configured).");
     }
 
     setCheckedIn(true);
@@ -91,28 +77,22 @@ export default function Home() {
     localStorage.setItem("jp_checkin_day", today);
   };
 
-  // =============================
-  // UI
-  // =============================
   return (
     <div
       style={{
         minHeight: "100vh",
         background: "black",
         color: "white",
-        textAlign: "center",
         padding: 20,
+        textAlign: "center",
       }}
     >
-      {/* Wallet Connect */}
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <Wallet />
       </div>
 
       <h1 style={{ marginTop: 20, fontSize: 28 }}>🔥 Jessepunk Mini-Game</h1>
-      <p style={{ opacity: 0.8 }}>Earn points daily and check in once per day.</p>
 
-      {/* Score */}
       <h2
         style={{
           fontSize: 60,
@@ -124,33 +104,31 @@ export default function Home() {
         {score}
       </h2>
 
-      {/* Score Button */}
       <button
         onClick={increaseScore}
         style={{
           background: "#5b3df5",
           padding: "16px 40px",
-          borderRadius: 12,
-          fontSize: 22,
-          border: "none",
-          marginTop: 25,
           color: "white",
+          borderRadius: 12,
+          border: "none",
+          fontSize: 22,
+          marginTop: 25,
         }}
       >
         +1
       </button>
 
-      {/* Check In Button */}
       <div style={{ marginTop: 40 }}>
         <button
           onClick={handleCheckIn}
           disabled={checkedIn}
           style={{
-            background: checkedIn ? "#555" : "#ffaa00",
-            padding: "16px 35px",
+            background: checkedIn ? "#666" : "#ffaa00",
+            padding: "14px 32px",
             borderRadius: 12,
-            fontSize: 20,
             border: "none",
+            fontSize: 20,
             color: checkedIn ? "#aaa" : "black",
             fontWeight: "700",
           }}
@@ -158,9 +136,7 @@ export default function Home() {
           {checkedIn ? "Checked In ✓" : "Daily Check-In"}
         </button>
 
-        <p style={{ marginTop: 10, fontSize: 13, opacity: 0.7 }}>
-          Today: {today}
-        </p>
+        <p style={{ marginTop: 10, opacity: 0.7 }}>Today: {today}</p>
       </div>
     </div>
   );
